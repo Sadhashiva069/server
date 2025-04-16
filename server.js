@@ -1,20 +1,48 @@
-import { Server } from 'socket.io';
+import express from 'express'; // Add Express import
 import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { Chess } from 'chess.js';
+import { fileURLToPath } from 'url'; // Add for file path handling
+import { dirname, join } from 'path'; // Add for file path handling
 
-const httpServer = createServer();
+// Get directory path for static file serving
+const __filename = fileURLToPath(import.meta.url);
+const _dirname = dirname(_filename);
+
+// Create Express app
+const app = express();
+
+// Create HTTP server with Express
+const httpServer = createServer(app);
+
+// Configure Socket.IO
 const io = new Server(httpServer, {
   cors: {
     origin: [
-      "http://localhost:5173", 
+      "http://localhost:5173",
       "https://recordings-polyphonic-purchasing-wildlife.trycloudflare.com",
-      "https://threed-chess-6rhz.onrender.com"
+      "https://incredible-pressed-reading-develop.trycloudflare.com",
+      // Add your Render URL when you have it
+      process.env.RENDER_EXTERNAL_URL || "https://threed-chess-6rhz.onrender.com"
     ],
     methods: ["GET", "POST"],
     credentials: true
   },
   transports: ['websocket', 'polling'],
   allowEIO3: true // Allow Engine.IO v3 client
+});
+
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// Serve static files from the dist directory (one level up from server folder)
+app.use(express.static(join(__dirname, '..', 'dist')));
+
+// Serve index.html for all routes for client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(join(__dirname, '..', 'dist', 'index.html'));
 });
 
 // Update your games object to include last activity time
@@ -38,6 +66,9 @@ io.on('connection', (socket) => {
         isCheckmate: game.gameState.isCheckmate(),
         isDraw: game.gameState.isDraw()
       });
+      console.log(Synced state for game ${gameId} for user ${socket.id});
+    } else {
+      console.log(Sync requested for non-existent game ${gameId} by user ${socket.id});
     }
   });
 
@@ -58,6 +89,7 @@ io.on('connection', (socket) => {
     };
     socket.join(gameId);
     socket.emit('game-created', { gameId, color: 'w' });
+    console.log(Game ${gameId} created by user ${socket.id});
   });
 
   socket.on('join-game', ({ gameId }) => {
@@ -76,15 +108,20 @@ io.on('connection', (socket) => {
         fen: games[gameId].gameState.fen(),
         turn: games[gameId].turn
       });
+      console.log(User ${socket.id} joined game ${gameId});
     } else {
       socket.emit('error', { message: 'Game not found or full' });
+      console.log(User ${socket.id} failed to join game ${gameId} (Not found or full));
     }
   });
 
   socket.on('make-move', ({ gameId, from, to }) => {
     try {
       const game = games[gameId];
-      if (!game) return;
+      if (!game) {
+        console.log(Move attempt on non-existent game ${gameId} by user ${socket.id});
+        return;
+      }
 
       const playerIndex = game.players.indexOf(socket.id);
       const playerColor = playerIndex === 0 ? 'w' : 'b';
@@ -110,6 +147,7 @@ io.on('connection', (socket) => {
           isDraw: game.gameState.isDraw(),
           move: move // Include the full move object
         });
+        console.log(Move made in game ${gameId} by user ${socket.id});
         
         // Send explicit turn notification to prevent desynchronization
         const nextPlayerIndex = game.turn === 'w' ? 0 : 1;
@@ -121,6 +159,7 @@ io.on('connection', (socket) => {
         }
       }
     } catch (error) {
+      console.error(Error processing move: ${error.message});
       socket.emit('error', { message: error.message });
     }
   });
@@ -167,6 +206,7 @@ io.on('connection', (socket) => {
         isCheckmate: game.gameState.isCheckmate(),
         isDraw: game.gameState.isDraw()
       });
+      console.log(User ${socket.id} reconnected to game ${gameId} (was ${previousId}));
       
       // Notify opponent
       const opponentIndex = playerIndex === 0 ? 1 : 0;
@@ -190,6 +230,7 @@ io.on('connection', (socket) => {
       game.lastActivity = Date.now();
       const opponentId = game.players[opponentIndex];
       io.to(opponentId).emit('draw-offered');
+      console.log(Draw offered in game ${gameId} by user ${socket.id});
     }
   });
 
@@ -199,6 +240,7 @@ io.on('connection', (socket) => {
     
     game.lastActivity = Date.now();
     io.to(gameId).emit('draw-accepted');
+    console.log(Draw accepted in game ${gameId});
     
     // Mark the game as finished but keep it for a while
     game.finished = true;
@@ -215,6 +257,7 @@ io.on('connection', (socket) => {
     
     game.lastActivity = Date.now();
     io.to(gameId).emit('player-resigned', { winner });
+    console.log(Player resigned in game ${gameId}. Winner: ${winner});
     
     // Mark the game as finished but keep it for a while
     game.finished = true;
@@ -254,11 +297,14 @@ setInterval(() => {
     const game = games[gameId];
     // Remove games inactive for more than 24 hours
     if (now - game.lastActivity > 24 * 60 * 60 * 1000) {
+      console.log(Removing inactive game: ${gameId});
       delete games[gameId];
     }
   });
 }, 60 * 60 * 1000); // Check every hour
 
-httpServer.listen(3000, () => {
-  console.log('listening on *:3000');
+// Use environment variable for port (required for Render)
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => {
+  console.log(Server listening on port ${PORT});
 });
