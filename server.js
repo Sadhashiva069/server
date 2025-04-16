@@ -7,7 +7,7 @@ import { dirname, join } from 'path'; // Add for file path handling
 
 // Get directory path for static file serving
 const __filename = fileURLToPath(import.meta.url);
-const _dirname = dirname(_filename);
+const dirname = dirname(_filename);
 
 // Create Express app
 const app = express();
@@ -38,11 +38,11 @@ app.get('/health', (req, res) => {
 });
 
 // Serve static files from the dist directory (one level up from server folder)
-app.use(express.static(join(__dirname, '..', 'dist')));
+app.use(express.static(join(_dirname, '..', 'dist')));
 
 // Serve index.html for all routes for client-side routing
 app.get('*', (req, res) => {
-  res.sendFile(join(__dirname, '..', 'dist', 'index.html'));
+  res.sendFile(join(_dirname, '..', 'dist', 'index.html'));
 });
 
 // Update your games object to include last activity time
@@ -67,9 +67,9 @@ io.on('connection', (socket) => {
         isDraw: game.gameState.isDraw()
       });
       // Line 69 (Corrected)
-      console.log(`Synced state for game ${gameId} for user ${socket.id}`);
+      console.log(Synced state for game ${gameId} for user ${socket.id});
     } else {
-      console.log(`Sync requested for non-existent game ${gameId} by user ${socket.id}`);
+      console.log(Sync requested for non-existent game ${gameId} by user ${socket.id});
     }
   });
 
