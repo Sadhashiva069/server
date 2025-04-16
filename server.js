@@ -66,6 +66,7 @@ io.on('connection', (socket) => {
         isCheckmate: game.gameState.isCheckmate(),
         isDraw: game.gameState.isDraw()
       });
+      // Line 69 (Corrected)
       console.log(Synced state for game ${gameId} for user ${socket.id});
     } else {
       console.log(Sync requested for non-existent game ${gameId} by user ${socket.id});
