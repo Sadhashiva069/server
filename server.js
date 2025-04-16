@@ -8,7 +8,7 @@ const io = new Server(httpServer, {
     origin: [
       "http://localhost:5173", 
       "https://recordings-polyphonic-purchasing-wildlife.trycloudflare.com",
-      "https://incredible-pressed-reading-develop.trycloudflare.com"
+      "https://threed-chess-6rhz.onrender.com"
     ],
     methods: ["GET", "POST"],
     credentials: true
