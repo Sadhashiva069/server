@@ -20,7 +20,7 @@ const io = new Server(httpServer, {
   cors: {
     origin: [
       "http://localhost:5173",
-      "https://recordings-polyphonic-purchasing-wildlife.trycloudflare.com",
+      "https://threed-chess-6rhz.onrender.com",
       "https://incredible-pressed-reading-develop.trycloudflare.com",
       // Add your Render URL when you have it
       process.env.RENDER_EXTERNAL_URL || "https://threed-chess-6rhz.onrender.com"
