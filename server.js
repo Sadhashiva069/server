@@ -7,7 +7,7 @@ import { dirname, join } from 'path'; // Add for file path handling
 
 // Get directory path for static file serving
 const __filename = fileURLToPath(import.meta.url);
-const dirname = dirname(_filename);
+const _dirname = dirname(_filename);  // Changed variable name to __dirname
 
 // Create Express app
 const app = express();
@@ -38,11 +38,11 @@ app.get('/health', (req, res) => {
 });
 
 // Serve static files from the dist directory (one level up from server folder)
-app.use(express.static(join(_dirname, '..', 'dist')));
+app.use(express.static(join(__dirname, '..', 'dist')));
 
 // Serve index.html for all routes for client-side routing
 app.get('*', (req, res) => {
-  res.sendFile(join(_dirname, '..', 'dist', 'index.html'));
+  res.sendFile(join(__dirname, '..', 'dist', 'index.html'));
 });
 
 // Update your games object to include last activity time
