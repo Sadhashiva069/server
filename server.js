@@ -90,7 +90,7 @@ io.on('connection', (socket) => {
     };
     socket.join(gameId);
     socket.emit('game-created', { gameId, color: 'w' });
-    console.log(Game ${gameId} created by user ${socket.id});
+    console.log(`Game ${gameId} created by user ${socket.id}`);
   });
 
   socket.on('join-game', ({ gameId }) => {
@@ -120,7 +120,7 @@ io.on('connection', (socket) => {
     try {
       const game = games[gameId];
       if (!game) {
-        console.log(Move attempt on non-existent game ${gameId} by user ${socket.id});
+        console.log(`Move attempt on non-existent game ${gameId} by user ${socket.id}`);
         return;
       }
 
@@ -148,7 +148,7 @@ io.on('connection', (socket) => {
           isDraw: game.gameState.isDraw(),
           move: move // Include the full move object
         });
-        console.log(Move made in game ${gameId} by user ${socket.id});
+        console.log(`Move made in game ${gameId} by user ${socket.id}`);
         
         // Send explicit turn notification to prevent desynchronization
         const nextPlayerIndex = game.turn === 'w' ? 0 : 1;
@@ -160,7 +160,7 @@ io.on('connection', (socket) => {
         }
       }
     } catch (error) {
-      console.error(Error processing move: ${error.message});
+      console.error(`Error processing move: ${error.message}`);
       socket.emit('error', { message: error.message });
     }
   });
